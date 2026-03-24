@@ -1,0 +1,249 @@
+= BTS SIO - Étude de cas RestiLoc
+
+== Mission 1 - Gestion des prestations de remise en état (PREE)
+
+=== Question 1.1
+
+On conserve les tables `Dossier`, `Vehicule` et `Modele`.
+
+On ajoute :
+
+- Une table `PREE` avec :
+* refPree (PK)
+* refDossier (FK)
+* numeroOrdre
+* libelle
+* description
+* photo
+* type
+
+- Une table `PreePeinture` :
+* refPree (PK, FK)
+* elementCarrosserie
+* traitement
+
+- Une table `Piece` :
+* idPiece (PK)
+* libelle
+* reference
+
+- Une table `PreePiece` :
+* refPree (PK, FK)
+* idPiece (PK, FK)
+* quantite
+
+== Mission 2 - Gestion des rendez-vous
+
+=== Question 2.1
+
+La classe `Expertise` est abstraite pour regrouper les éléments communs et éviter une instanciation directe.
+
+=== Question 2.2
+
+[source,csharp]
+----
+public void AjouterExpertisePool(string dossier, DateTime dateHeure, string lieu, string adresse, string immat, string marque, string modele) {
+    ExpertisePool uneExpertise = new ExpertisePool(dossier, dateHeure, lieu, adresse, immat, marque, modele);
+    lesExpertises.Add(uneExpertise);
+}
+----
+
+=== Question 2.3
+
+[source,csharp]
+----
+public string GetMotif() {
+    return motif;
+}
+----
+
+=== Question 2.4
+
+[source,csharp]
+----
+public List<Expertise> LesExpertisesIndispos() {
+    List<Expertise> lesIndispos = new List<Expertise>();
+
+    foreach (Expertise uneExpertise in lesExpertises) {
+        if (uneExpertise.GetIndisponibilite() != null) {
+            lesIndispos.Add(uneExpertise);
+        }
+    }
+
+    return lesIndispos;
+}
+----
+
+=== Question 2.5
+
+[source,csharp]
+----
+public int NbIndisponibilites(string leMotif) {
+    int nb = 0;
+
+    foreach (Expertise uneExpertise in lesExpertises) {
+        if (uneExpertise.GetIndisponibilite() != null &&
+            uneExpertise.GetIndisponibilite().GetMotif() == leMotif) {
+            nb++;
+        }
+    }
+
+    return nb;
+}
+----
+
+== Mission 3 - Application mobile pour les experts
+
+=== Question 3.1
+
+[source,sql]
+----
+SELECT
+    M.dateMission,
+    M.heureDebut,
+    V.immatriculation,
+    V.marque,
+    V.modele,
+    E.nom,
+    E.prenom
+FROM MissionExpertise M
+JOIN Expert E ON M.idExpert = E.idExpert
+JOIN VehiculeExpertise V ON M.idMission = V.idMission
+ORDER BY M.dateMission ASC, M.heureDebut ASC;
+----
+
+[source,sql]
+----
+SELECT
+    E.idExpert,
+    E.nom,
+    E.prenom,
+    COUNT(M.idMission) AS nbVehiculesExpertises
+FROM Expert E
+JOIN MissionExpertise M ON E.idExpert = M.idExpert
+WHERE YEAR(M.dateMission) = 2018
+GROUP BY E.idExpert, E.nom, E.prenom;
+----
+
+[source,sql]
+----
+SELECT
+    G.idGarage,
+    G.nom,
+    G.ville,
+    G.tel
+FROM Garage G
+JOIN MissionExpertise M ON G.idGarage = M.idGarage
+GROUP BY G.idGarage, G.nom, G.ville, G.tel
+HAVING COUNT(M.idMission) > 100;
+----
+
+=== Question 3.2
+
+[source,txt]
+----
+Application Android → requête HTTP → Apache
+Apache → exécute PHP
+PHP → interroge SQL Server
+SQL Server → renvoie données
+PHP → transforme en JSON
+PHP → renvoie JSON à Android
+Android → affiche les données
+----
+
+=== Question 3.3
+
+[source,php]
+----
+$sql = "SELECT idMission, heureDebut, ville, G.nom AS nomGarage,
+        V.immatriculation AS immatriculation, marque, modele
+        FROM MissionExpertise M
+        JOIN Garage G ON M.idGarage = G.idGarage
+        JOIN VehiculeExpertise V ON M.idMission = V.idMission
+        WHERE idExpert = :idExpert
+        AND dateMission = :dateJour
+        ORDER BY heureDebut ASC";
+----
+
+== Mission 4 - Cybersécurité et transformation numérique
+
+=== Question 4.1.1
+
+Risque sur l’intégrité : modification ou suppression des données → erreurs métier.
+Solution : droits d’accès, audit, sauvegardes.
+
+Risque sur la disponibilité : panne ou attaque → système inaccessible.
+Solution : redondance, sauvegardes, PRA.
+
+=== Question 4.1.2
+
+La photo sert de preuve pour justifier l’état du véhicule.
+
+=== Question 4.2.1
+
+Les données personnelles permettent d’identifier une personne.
+Les données sensibles sont des données très protégées.
+
+Les données de la table `Expert` sont personnelles mais pas sensibles.
+
+=== Question 4.2.2
+
+Le hachage transforme un mot de passe en valeur non réversible.
+
+On stocke uniquement le hash et non le mot de passe.
+
+Algorithmes recommandés : Argon2, bcrypt.
+
+=== Question 4.3.1
+
+[source,php]
+----
+<?php
+$id = $_GET['idExpert'];
+
+$sql = "SELECT idMission, heureDebut, ville, V.immatriculation AS immatriculation, marque, modele
+        FROM MissionExpertise M
+        JOIN Garage G ON M.idGarage = G.idGarage
+        JOIN VehiculeExpertise V ON M.idMission = V.idMission
+        WHERE idExpert = :idExpert
+        AND dateMission = :dateJour
+        ORDER BY heureDebut ASC";
+
+$stmt = $bdd->prepare($sql);
+
+$stmt->execute([
+    ':idExpert' => $id,
+    ':dateJour' => date("Y-m-d")
+]);
+
+$resultat = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+----
+
+=== Question 4.3.2
+
+La faille IDOR permet de modifier l’id dans l’URL pour accéder aux données d’un autre utilisateur.
+Il faut vérifier les droits côté serveur.
+
+=== Question 4.4.1
+
+[source,sql]
+----
+CREATE TABLE AUDIT_SUPPRESSION (
+    idMissionSupprimee INT,
+    dateSuppression DATETIME
+);
+----
+
+[source,sql]
+----
+CREATE TRIGGER trig_audit_delete_mission
+ON MissionExpertise
+AFTER DELETE
+AS
+BEGIN
+    INSERT INTO AUDIT_SUPPRESSION (idMissionSupprimee, dateSuppression)
+    SELECT idMission, GETDATE()
+    FROM deleted;
+END;
+----
