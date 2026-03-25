@@ -1,0 +1,79 @@
+= Correction Personnalisée - TP Étude de Cas RestiLoc
+:author: Correction pour Mme Sabetha Poothapillai
+:toc: left
+:toc-title: Sommaire
+:icons: font
+
+Bonjour Mme Poothapillai.
+
+Le travail fourni sur l'étude de cas RestiLoc est d'un bon niveau technique. L'implémentation C#, les requêtes SQL complexes, l'architecture et la sécurisation applicative sont parfaitement maîtrisées. C'est très rassurant si vous arrivez à le reproduire pour l'épreuve E5.
+
+Il manque la synthèse théorique finale et le prototype JavaFx.
+
+Voici le détail factuel de votre évaluation.
+
+---
+
+== Mission 1 : Modélisation des prestations (PREE)
+
+**Votre réponse :** Modélisation en plusieurs tables (`PREE`, `PreePeinture`, `Piece`, `PreePiece`).
+
+[NOTE]
+.Évaluation - Validé
+====
+L'approche choisie (séparation stricte des entités enfants) est tout à fait valide sur le plan conceptuel.
+
+*Note d'optimisation :* Dans un contexte réel, pour éviter de multiplier les jointures complexes (notamment pour l'affichage de la liste des prestations d'un dossier), on privilégie souvent une modélisation "Bottom Up" (une seule table `PREE` contenant toutes les colonnes, avec des valeurs `NULL` pour les attributs non concernés). Votre solution reste néanmoins correcte académiquement.
+====
+
+== Mission 2 : Gestion des rendez-vous (C#)
+
+**Vos réponses :** Justification de l'abstraction et implémentation complète des méthodes C#.
+
+[NOTE]
+.Évaluation - Excellent
+====
+* **Abstraction (2.1) :** La justification est concise et exacte (regroupement des éléments communs, blocage de l'instanciation directe).
+* **Algorithmique (2.2 à 2.5) :** Le code est impeccable. La vérification de la nullité de l'objet avant d'appeler ses méthodes (`uneExpertise.GetIndisponibilite() != null`) démontre une réelle maturité en développement et permet d'éviter les crashs inopinés (`NullReferenceException`).
+
+====
+
+== Mission 3 : Application et Architecture
+
+**Vos réponses :** Requêtes SQL complètes et flux d'architecture 3-tiers.
+
+[NOTE]
+.Évaluation - Excellent
+====
+* **Requêtes SQL (3.1) :** Les trois requêtes sont bien rédigées. La gestion des jointures, des fonctions d'agrégation (`COUNT`) et surtout le filtrage sur le groupe (`HAVING COUNT(M.idMission) > 100`) sont  maîtrisés.
+* **Architecture (3.2 & 3.3) :** Le schéma de flux de données (Client -> HTTP -> Apache/PHP -> SQL Server -> JSON -> Client) résume parfaitement le fonctionnement d'une API RESTful moderne.
+====
+
+== Mission 4 : Cybersécurité et RGPD
+
+**Vos réponses :** Analyse DICP, correction PHP (Requêtes préparées), faille IDOR et Trigger d'audit.
+
+[NOTE]
+.Évaluation - Très bien
+====
+* **Théorie (DICP et RGPD) :** Les principes d'intégrité, de disponibilité et la distinction entre donnée personnelle et sensible sont bien compris. La notion de "preuve" juridique justifiant la prise de photo est correcte.
+* **Sécurisation PHP (4.3.1) :** La réécriture de la requête via PDO (`prepare` / `execute`) ferme définitivement la faille d'injection SQL.
+* **Base de données (4.4.1) :** Le Trigger d'audit est totalement fonctionnel. L'utilisation de la table virtuelle `deleted` démontre que vous avez bien pris en compte l'environnement technique imposé (SQL Server).
+====
+
+== Questions de synthèse
+
+[WARNING]
+.Erreur - Travail non rendu
+====
+L'intégralité des 10 questions de synthèse (Héritage, IDOR, Désérialisation Jackson, etc.) est absente de votre document. Bien que votre technique soit irréprochable, l'épreuve E5 évalue également votre capacité à vulgariser et expliquer vos choix d'architecture.
+====
+
+== Conclusion
+
+Note estimée : **16 / 20**
+
+Votre copie est bonne sur l'ensemble de la réalisation technique (SQL, C#, PHP, Cybersécurité). Le code est robuste et sécurisé.
+Il manque les questions de synthèse.
+
+Il faut confirmer en étude de cas écrite. Pour la partie prototype je n'ai pas vu
